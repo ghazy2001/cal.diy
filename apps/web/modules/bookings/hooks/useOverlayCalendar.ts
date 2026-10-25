@@ -61,19 +61,21 @@ export const useOverlayCalendar = ({
 
   useEffect(() => {
     // Wait for the connected calendars to load, otherwise we'd initialise with nothing
-    if (connectedCalendars?.length && set.size === 0 && !initalised) {
-      // Start with the calendars the user checks for conflicts, that's what they consider themselves busy with
-      const defaultCalendars = connectedCalendars.flatMap((item) =>
-        (item.calendars ?? [])
-          .filter((cal) => cal.isSelected ?? cal.primary)
-          .map((cal) => ({ credentialId: item.credentialId, externalId: cal.externalId }))
-      );
-      defaultCalendars.forEach(addValue);
-      onToggleCalendar(new Set(defaultCalendars));
+    if (connectedCalendars?.length && !initalised) {
+      if (set.size === 0) {
+        // Start with the calendars the user checks for conflicts, that's what they consider themselves busy with
+        const defaultCalendars = connectedCalendars.flatMap((item) =>
+          (item.calendars ?? [])
+            .filter((cal) => cal.isSelected ?? cal.primary)
+            .map((cal) => ({ credentialId: item.credentialId, externalId: cal.externalId }))
+        );
+        defaultCalendars.forEach(addValue);
+        onToggleCalendar(new Set(defaultCalendars));
+      }
       setInitalised(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasItem, set, initalised]);
+  }, [hasItem, set, initalised, connectedCalendars?.length]);
 
   const handleToggleConnectedCalendar = (externalCalendarId: string, credentialId: number): void => {
     const calendarsToLoad = toggleValue({
