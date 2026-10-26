@@ -520,4 +520,45 @@ describe("getAggregatedAvailability", () => {
 
     expect(result).toEqual([]);
   });
+
+  it("falls back to dateRanges when oooExcludedDateRanges is undefined on fixed hosts in team events", () => {
+    const userAvailability = [
+      {
+        dateRanges: [{ start: dayjs("2025-01-23T10:00:00.000Z"), end: dayjs("2025-01-23T12:00:00.000Z") }],
+        user: { isFixed: true },
+      },
+      {
+        dateRanges: [{ start: dayjs("2025-01-23T11:00:00.000Z"), end: dayjs("2025-01-23T13:00:00.000Z") }],
+        oooExcludedDateRanges: undefined,
+        user: { isFixed: true },
+      },
+    ];
+
+    const result = getAggregatedAvailability(userAvailability, "COLLECTIVE");
+
+    expect(result).toHaveLength(1);
+    expect(result[0].start.format()).toEqual(dayjs("2025-01-23T11:00:00.000Z").format());
+    expect(result[0].end.format()).toEqual(dayjs("2025-01-23T12:00:00.000Z").format());
+  });
+
+  it("falls back to dateRanges when oooExcludedDateRanges is undefined on round-robin hosts in team events", () => {
+    const userAvailability = [
+      {
+        dateRanges: [{ start: dayjs("2025-01-23T10:00:00.000Z"), end: dayjs("2025-01-23T11:00:00.000Z") }],
+        user: { isFixed: false },
+      },
+      {
+        dateRanges: [{ start: dayjs("2025-01-23T11:00:00.000Z"), end: dayjs("2025-01-23T12:00:00.000Z") }],
+        user: { isFixed: false },
+      },
+    ];
+
+    const result = getAggregatedAvailability(userAvailability, "ROUND_ROBIN");
+
+    expect(result).toHaveLength(2);
+    expect(result[0].start.format()).toEqual(dayjs("2025-01-23T10:00:00.000Z").format());
+    expect(result[0].end.format()).toEqual(dayjs("2025-01-23T11:00:00.000Z").format());
+    expect(result[1].start.format()).toEqual(dayjs("2025-01-23T11:00:00.000Z").format());
+    expect(result[1].end.format()).toEqual(dayjs("2025-01-23T12:00:00.000Z").format());
+  });
 });
