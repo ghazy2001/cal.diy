@@ -208,6 +208,68 @@ describe("Booking Validation Specifications", () => {
         })
       ).rejects.toThrow("Cannot use this email to create the booking.");
     });
+
+    test("correctly blocks email when BLACKLISTED_GUEST_EMAILS contains surrounding whitespace or spaces after commas", async () => {
+      const handleNewBooking = getNewBookingHandler();
+      const blockedEmail = "blocked@example.com";
+
+      const booker = getBooker({
+        email: blockedEmail,
+        name: "Unverified User",
+      });
+
+      const organizer = getOrganizer({
+        name: "Organizer",
+        email: "organizer@example.com",
+        id: 101,
+        schedules: [TestData.schedules.IstWorkHours],
+        credentials: [getGoogleCalendarCredential()],
+        selectedCalendars: [TestData.selectedCalendars.google],
+        emailVerified: null,
+      });
+
+      // Spaced entry after comma and surrounding whitespace
+      process.env.BLACKLISTED_GUEST_EMAILS = " spam@test.com , blocked@example.com , other@test.com ";
+
+      await createBookingScenario(
+        getScenarioData({
+          eventTypes: [
+            {
+              id: 1,
+              slotInterval: 30,
+              length: 30,
+              users: [
+                {
+                  id: 101,
+                },
+              ],
+            },
+          ],
+          organizer,
+          apps: [TestData.apps["google-calendar"]],
+        })
+      );
+
+      await mockCalendarToHaveNoBusySlots("googlecalendar", {});
+
+      const mockBookingData = getMockRequestDataForBooking({
+        data: {
+          eventTypeId: 1,
+          responses: {
+            email: booker.email,
+            name: booker.name,
+            location: { optionValue: "", value: "New York" },
+          },
+        },
+      });
+
+      // Should prevent booking when blacklisted email has surrounding whitespace in env var
+      await expect(
+        handleNewBooking({
+          bookingData: mockBookingData,
+        })
+      ).rejects.toThrow("Cannot use this email to create the booking.");
+    });
   });
 
   describe("Active Bookings Limit Validation", () => {
