@@ -1,4 +1,4 @@
-import type { SessionContextValue } from "next-auth/react";
+import { signOut, type SessionContextValue } from "next-auth/react";
 import Link from "next/link";
 
 import { useLocale } from "@calcom/lib/hooks/useLocale";
@@ -18,14 +18,23 @@ function getBannerMessageKey(reason: "both" | "password" | "2fa" | undefined): s
   }
 }
 
-function getBannerAction(reason: "both" | "password" | "2fa" | undefined): { href: string; labelKey: string } {
+function getBannerAction(reason: "both" | "password" | "2fa" | undefined): {
+  href: string;
+  labelKey: string;
+} {
   switch (reason) {
     case "2fa":
-      return { href: "/settings/security/two-factor-auth", labelKey: "enable_2fa" };
+      return {
+        href: "/settings/security/two-factor-auth",
+        labelKey: "enable_2fa",
+      };
     case "password":
     case "both":
     default:
-      return { href: "/settings/security/password", labelKey: "change_password_admin" };
+      return {
+        href: "/settings/security/password",
+        labelKey: "change_password_admin",
+      };
   }
 }
 
@@ -43,9 +52,18 @@ function AdminPasswordBanner({ data }: AdminPasswordBannerProps) {
         text={t(messageKey, { user: data.user.username })}
         variant="warning"
         actions={
-          <Link href={href} className="border-b border-b-black">
-            {t(labelKey)}
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href={href} className="border-b border-b-black">
+              {t(labelKey)}
+            </Link>
+            <span aria-hidden="true">•</span>
+            <button
+              type="button"
+              onClick={() => signOut({ callbackUrl: "/auth/login" })}
+              className="border-b border-b-black">
+              {t("re_login_to_refresh_admin")}
+            </button>
+          </div>
         }
       />
     </>

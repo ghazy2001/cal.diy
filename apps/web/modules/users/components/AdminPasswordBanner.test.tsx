@@ -5,6 +5,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import AdminPasswordBanner from "./AdminPasswordBanner";
 
+vi.mock("next-auth/react", () => ({
+  signOut: vi.fn(),
+}));
+
 vi.mock("@calcom/lib/hooks/useLocale", () => ({
   useLocale: () => ({
     t: (key: string) => key,
@@ -28,9 +32,9 @@ vi.mock("@calcom/ui/components/top-banner", () => ({
   ),
 }));
 
-function buildSession(overrides?: Partial<NonNullable<SessionContextValue["data"]>>): NonNullable<
-  SessionContextValue["data"]
-> {
+function buildSession(
+  overrides?: Partial<NonNullable<SessionContextValue["data"]>>
+): NonNullable<SessionContextValue["data"]> {
   return {
     expires: "2099-01-01T00:00:00.000Z",
     hasValidLicense: true,
@@ -51,13 +55,17 @@ function buildSession(overrides?: Partial<NonNullable<SessionContextValue["data"
 
 describe("AdminPasswordBanner", () => {
   it("does not render for non-INACTIVE_ADMIN users", () => {
-    const data = buildSession({ user: { ...buildSession().user, role: "USER" } });
+    const data = buildSession({
+      user: { ...buildSession().user, role: "USER" },
+    });
     const { container } = render(<AdminPasswordBanner data={data} />);
     expect(container).toBeEmptyDOMElement();
   });
 
   it("renders 2FA-only message and links to 2FA settings", () => {
-    const data = buildSession({ user: { ...buildSession().user, inactiveAdminReason: "2fa" } });
+    const data = buildSession({
+      user: { ...buildSession().user, inactiveAdminReason: "2fa" },
+    });
 
     render(<AdminPasswordBanner data={data} />);
 
@@ -65,10 +73,13 @@ describe("AdminPasswordBanner", () => {
     const link = screen.getByRole("link");
     expect(link).toHaveAttribute("href", "/settings/security/two-factor-auth");
     expect(link).toHaveTextContent("enable_2fa");
+    expect(screen.getByRole("button", { name: "re_login_to_refresh_admin" })).toBeInTheDocument();
   });
 
   it("renders password-only message and links to password settings", () => {
-    const data = buildSession({ user: { ...buildSession().user, inactiveAdminReason: "password" } });
+    const data = buildSession({
+      user: { ...buildSession().user, inactiveAdminReason: "password" },
+    });
 
     render(<AdminPasswordBanner data={data} />);
 
@@ -76,10 +87,13 @@ describe("AdminPasswordBanner", () => {
     const link = screen.getByRole("link");
     expect(link).toHaveAttribute("href", "/settings/security/password");
     expect(link).toHaveTextContent("change_password_admin");
+    expect(screen.getByRole("button", { name: "re_login_to_refresh_admin" })).toBeInTheDocument();
   });
 
   it("defaults to both message and password settings when reason is missing", () => {
-    const data = buildSession({ user: { ...buildSession().user, inactiveAdminReason: undefined } });
+    const data = buildSession({
+      user: { ...buildSession().user, inactiveAdminReason: undefined },
+    });
 
     render(<AdminPasswordBanner data={data} />);
 
@@ -87,5 +101,6 @@ describe("AdminPasswordBanner", () => {
     const link = screen.getByRole("link");
     expect(link).toHaveAttribute("href", "/settings/security/password");
     expect(link).toHaveTextContent("change_password_admin");
+    expect(screen.getByRole("button", { name: "re_login_to_refresh_admin" })).toBeInTheDocument();
   });
 });

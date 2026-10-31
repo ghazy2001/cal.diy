@@ -166,8 +166,21 @@ const EnableTwoFactorModal = ({ onEnable, onCancel, open, onOpenChange }: Enable
 
   const formatBackupCode = (code: string) => `${code.slice(0, 5)}-${code.slice(5, 10)}`;
 
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      if (step === SetupStep.DisplayBackupCodes) {
+        resetState();
+        onEnable();
+      } else {
+        resetState();
+        onCancel();
+      }
+    }
+    onOpenChange?.(isOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         title={step === SetupStep.DisplayBackupCodes ? t("backup_codes") : t("enable_2fa")}
         description={setupDescriptions[step]}
@@ -268,8 +281,7 @@ const EnableTwoFactorModal = ({ onEnable, onCancel, open, onOpenChange }: Enable
                   data-testid="backup-codes-close"
                   onClick={(e) => {
                     e.preventDefault();
-                    resetState();
-                    onEnable();
+                    handleOpenChange(false);
                   }}>
                   {t("close")}
                 </Button>
