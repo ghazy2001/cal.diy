@@ -1,7 +1,6 @@
 import dayjs from "@calcom/dayjs";
 import { checkIfFreeEmailDomain } from "@calcom/features/watchlist/lib/freeEmailDomainCheck/checkIfFreeEmailDomain";
 import { withReporting } from "@calcom/lib/sentryWrapper";
-
 import type { getEventTypeResponse } from "./getEventTypesFromDB";
 
 type EventType = Pick<
@@ -61,7 +60,7 @@ const _determineRequiresConfirmation = async (
 
   if (rcThreshold) {
     const timeDifference = dayjs(dayjs(bookingStartTime).utc().format()).diff(dayjs(), rcThreshold.unit);
-    if (timeDifference > rcThreshold.time) {
+    if (timeDifference >= rcThreshold.time) {
       requiresConfirmation = false;
     }
   }

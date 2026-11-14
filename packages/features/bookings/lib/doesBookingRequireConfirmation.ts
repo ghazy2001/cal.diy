@@ -1,7 +1,6 @@
-import type { z } from "zod";
-
 import dayjs from "@calcom/dayjs";
 import type { EventTypeMetaDataSchema } from "@calcom/prisma/zod-utils";
+import type { z } from "zod";
 
 /**
  * Determines if a booking actually requires confirmation(considering requiresConfirmationThreshold)
@@ -27,8 +26,8 @@ export const doesBookingRequireConfirmation = ({
     // Calculate the time difference in the specified unit
     const timeDifference = startTimeUTC.diff(currentTime, rcThreshold.unit);
 
-    // Check if the time difference exceeds the threshold
-    if (timeDifference > rcThreshold.time) {
+    // Check if the time difference meets or exceeds the threshold
+    if (timeDifference >= rcThreshold.time) {
       requiresConfirmation = false;
     }
   }
